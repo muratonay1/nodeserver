@@ -1,7 +1,7 @@
 //websoket küt.
 var WebSocketServer = require('ws').Server;
 //websoket oluşturuluyor.
-var wss = new WebSocketServer({ port: 4000 });
+var wss = new WebSocketServer({ port: 8000 });
 //sokete bağlı tüm kullanıcılar
 var users = {};
 //kullanıcı sokete bağlandığı zaman
@@ -39,6 +39,71 @@ wss.on('connection', function(connection) {
                     });
                 }
                 break;
+            case "offer":
+                //örneğin userA userB'yi aramak istiyor.
+                console.log("\n\nENTER CASE OFFER\n\n");
+                console.log(data.name, "'e istek gönderildi.");
+                console.log("CalleNAME", data.calleName);
+                //UserB bilgilerini alıyoruz. 
+                var conn = users[data.name];
+                console.log("conn degiskeni: ", users[data.name]);
+                if (conn != null) {
+                    connection.otherName = data.name;
+                    sendTo(conn, {
+                        type: "offer",
+                        offer: data.offer,
+                        name: connection.name,
+                        calleName: data.calleName
+                    });
+                }
+                break;
+                //kabul et botununa basinca tetiklenecek case
+            case "answer":
+                try {
+                    console.log("answer'a girdi.")
+                    console.log("Sending answer to : ", data.name);
+                    console.log("CEVAP : ", data.answer);
+                    // UserB answers UserA 
+                    var conn = users[data.name];
+                    if (conn != null) {
+                        connection.otherName = data.name;
+                        sendTo(conn, {
+                            type: "answer",
+                            answer: data.answer
+                        });
+                    }
+                } catch (error) {
+                    console.log("answer'da patladi", error);
+                }
+                break;
+                //aramayi decline ederken kubreak; llanilacak
+            case "decline":
+                try {
+                    console.log("decline girildi.");
+                    if (conn != null) {
+                        connection.otherName = data.name;
+                        sendTo(conn, {
+                            type: "decline",
+                            answer: data.answer
+                        });
+                    }
+                } catch (error) {
+
+                }
+            case "candidate":
+                try {
+                    console.log("Sending candidate to:", data.name);
+                    var conn = users[data.name];
+                    if (conn != null) {
+                        sendTo(conn, {
+                            type: "candidate",
+                            candidate: data.candidate,
+                        });
+                    }
+                    break;
+                } catch (error) {
+                    console.log("case: 'candidate te patladi.'");
+                }
             case "leave":
                 try {
                     console.log("Disconnecting from", data.name);
@@ -88,6 +153,12 @@ wss.on('connection', function(connection) {
             console.log(error, " HATASI 'close yani type:leave de gerçeklesti'");
         }
     });
+});
+var localIpV4Address = require("local-ipv4-address");
+localIpV4Address().then(async function(ipAddress) {
+    IPV4 = ipAddress;
+    await writeUserData(ipAddress);
+    localStorage.setItem("ServerIp", IPV4);
 });
 
 function sendTo(connection, message) {
