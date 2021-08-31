@@ -11,6 +11,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "local-ipv4-address": "0.0.2",
         "ws": "^8.2.1"
     }
 }
