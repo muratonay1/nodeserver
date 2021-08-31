@@ -1,0 +1,8 @@
+version: "3.4"
+services:
+  express:
+    container_name: nodeserver
+    build: .
+    image: nodeserver
+    ports:
+      - 4235:8000
